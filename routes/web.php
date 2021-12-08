@@ -32,6 +32,8 @@ Route::middleware([Session_mw::class])->group(function () {
 
     Route::get('/order', [Admin::class, 'order']);
 
+    Route::get('/email', [Admin::class, 'mail']);
+
     Route::get('/logout', [Admin::class, 'logout']);
 });
 

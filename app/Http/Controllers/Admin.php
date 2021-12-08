@@ -8,6 +8,7 @@ use Illuminate\Support\Facades\Hash;
 use App\Models\Customer;
 use App\Models\Menu;
 use App\Models\Order;
+use Illuminate\Support\Facades\Mail;
 
 class Admin extends Controller
 {
@@ -122,7 +123,7 @@ class Admin extends Controller
         $user = session('user');
         $id = $user->id;
         $u = Customer::where('id', '=', $id)->first();
-        return view('pizza.pages.editprofile', ['u'=>$u]);
+        return view('pizza.pages.editprofile', ['u' => $u]);
     }
 
     public function changepass()
@@ -249,6 +250,12 @@ class Admin extends Controller
         return view('pizza.pages.payment', ['menu' => $menu, 'amt' => $amt]);
     }
 
+    public function mail()
+    {
+        return view('pizza.pages.mail');
+        
+    }
+
     public function payvalid(Request $req)
     {
         $validatePay = $req->validate([
@@ -272,10 +279,19 @@ class Admin extends Controller
             $ord->total = $req->total;
             $ord->card_number = $req->card;
             if ($ord->save()) {
+                $email = session('user')->email;
+                $menu = Menu::all();
+                $data = ['card'=>$req->card,'menu'=>$menu, 'total'=>$req->total];
+                $mail['to'] = $email;
+                Mail::send('pizza.pages.mail', $data, function($message) use($mail){
+                    $message->to($mail['to']);
+                    $message->subject('Pizza Bay - Order Details');
+                });
                 session()->forget('cart');
                 session()->forget('cart_val');
+
                 // return back()->with('Success', 'Thankyou! Order placed successfully!');
-                return Redirect::to('/home')->with('Success', 'Thankyou! Order placed successfully!');
+                return Redirect::to('/home')->with('Success', 'Thankyou, order placed successfully! Check registered email!');
             } else {
                 return Redirect::to('/home')->with('Error', 'Error placing order');
             }
